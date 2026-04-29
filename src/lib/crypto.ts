@@ -1,4 +1,4 @@
-import forge from 'node-forge';
+import { createVerify } from 'react-native-quick-crypto';
 import { API_BASE } from '../config';
 
 export async function sign(plaintext: string): Promise<string> {
@@ -30,13 +30,11 @@ async function getPublicKeyPem(): Promise<string> {
 }
 
 export async function verify(plaintext: string, signatureB64: string): Promise<boolean> {
-  const pem       = await getPublicKeyPem();
-  const publicKey = forge.pki.publicKeyFromPem(pem) as forge.pki.rsa.PublicKey;
-  const md        = forge.md.sha256.create();
-  md.update(plaintext, 'utf8');
-  const sigBytes = forge.util.decode64(signatureB64);
+  const pem = await getPublicKeyPem();
   try {
-    return publicKey.verify(md.digest().bytes(), sigBytes);
+    const verifier = createVerify('RSA-SHA256');
+    verifier.update(plaintext, 'utf8');
+    return verifier.verify(pem, signatureB64, 'base64');
   } catch {
     return false;
   }

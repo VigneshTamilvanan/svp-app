@@ -1,6 +1,8 @@
-# Chennai One SVP — QR Generator & Verifier
+# Chennai One SVP — QR Generator, Verifier & AFC Gate Validator
 
-A React Native (Expo) app for generating and verifying **Store Value Pass (SVP)** QR codes for the Chennai Metro Rail (CMRL) AFC system.
+A React Native (Expo) app serving two roles:
+1. **Passenger app** — generates and verifies Store Value Pass (SVP) QR codes for Chennai Metro Rail (CMRL)
+2. **AFC Gate Validator** — scans passenger QR codes at station gates, records entry/exit events, and notifies the fare computation system
 
 ## Features
 
@@ -8,6 +10,65 @@ A React Native (Expo) app for generating and verifying **Store Value Pass (SVP)*
 - **Auto-refresh** — QR refreshes on a configurable interval (TAG 84 dynamic data update) with a 10-minute session timeout
 - **Verify QR** — scan or paste a QR payload and verify the RSA-2048/SHA-256 signature against the server public key
 - **Payload Breakdown** — inspect every TAG/field in the QR dataset after generation or verification
+- **AFC Gate Validator** — validates QR at entry/exit, records events to Supabase, and pushes trip data to the fare computation API
+
+## AFC Gate Flow
+
+This app acts as the Automatic Fare Collection (AFC) gate controller at each metro station. The flow is:
+
+```
+Passenger presents QR
+        │
+        ▼
+[AFC App] Validate QR signature + freshness
+        │
+        ▼
+[AFC App] Extract mobileNumber from QR (last field in SVC/TAG83 block)
+        │
+        ▼
+[AFC App] POST to Fare API → { mobileNumber, stationCode, scanType: ENTRY/EXIT, timestamp }
+        │
+        ├── allowed: false → Show denial reason, gate stays closed
+        │
+        └── allowed: true  → Record event in Supabase, gate opens
+```
+
+### Entry scan
+- AFC calls the fare API with `scanType: ENTRY` and the station code
+- Fare API checks wallet balance (minimum ₹50 required) and returns `allowed`
+- On approval: event recorded in Supabase, "Happy Journey" shown
+
+### Exit scan
+- AFC calls the fare API with `scanType: EXIT` and the exit station code
+- Fare API computes trip fare (entry→exit), deducts from wallet, returns `allowed`
+- On approval: trip summary shown with boarded/alighted stations
+
+### Gate decision source
+The gate open/close decision is **owned entirely by the fare API**. The AFC app is a thin validator and pusher — it does not compute fare or manage balances. Supabase records are the audit trail; the fare API response is the gate authority.
+
+### Validation checks (AFC-side, before API call)
+| Check | Behaviour |
+|---|---|
+| QR signature invalid | Blocked — invalid ticket |
+| QR older than 30 seconds | Blocked — expired QR |
+| Same QR scanned within 10 seconds | Blocked — duplicate scan warning |
+| Exit station = Entry station | Blocked — same station warning |
+
+### Fare API
+```
+POST https://api.sandbox.moving.tech/dev/app/v2/svp/gate
+{
+  "mobileNumber": "8264990512",
+  "merchantId":   "da4e23a5-3ce6-4c37-8b9b-41377c3c1a51",
+  "stationCode":  "SCC|0201",
+  "timestamp":    "2026-04-29T10:00:00Z",
+  "scanType":     "ENTRY" | "EXIT"
+}
+
+Response:
+{ "allowed": true,  "reason": null }
+{ "allowed": false, "reason": "Insufficient balance. Minimum ₹50 required." }
+```
 
 ## Tech Stack
 
@@ -82,13 +143,17 @@ adb reverse tcp:8081 tcp:8081 && npx expo start
 ```
 app/
   (tabs)/
-    index.tsx           # Generate QR screen
-    verify.tsx          # Verify QR screen
+    index.tsx           # AFC Gate Validator screen (main scan + entry/exit flow)
+    gate.tsx            # Gate scanner tab (alternate scanner UI)
+    verify.tsx          # Verify QR screen (manual inspection)
+    events.tsx          # Event log screen (Supabase audit trail)
+    settings.tsx        # Settings screen
     _layout.tsx         # Tab navigator
   _layout.tsx           # Root layout
 
 src/
   components/
+    GateScanner.tsx     # Camera scanner component used by gate tab
     SVPForm.tsx         # Input form (balance, mobile, TXN ref, refresh interval)
     QRDisplay.tsx       # QR code display with countdown ring
     QRVerifier.tsx      # Camera scanner + manual paste + result summary
@@ -99,9 +164,11 @@ src/
     sqdsr.ts            # Serialise dataset to pipe-delimited string
     parser.ts           # Parse raw QR string back into dataset fields
     validator.ts        # Field validation helpers
+    gate.ts             # Gate logic: processGate(), validation checks, fare API call
+    supabase.ts         # Supabase REST client: insertEvent(), getLastEvent(), fetchEvents()
   constants/
     spec.ts             # TAG constants, field sizes, SVP defaults
-    stations.ts         # CMRL station codes and operator constants
+    stations.ts         # CMRL station codes, stationCode mappings, operator constants
   config.ts             # API base URL
 ```
 
