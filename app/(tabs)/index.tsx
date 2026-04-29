@@ -136,9 +136,9 @@ export default function GenerateScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: '#0f172a' },
+  safe:        { flex: 1, backgroundColor: '#f8fafc' },
   scroll:      { flex: 1 },
   content:     { padding: 16, paddingBottom: 40 },
-  errorBanner: { backgroundColor: '#2d0a0a', borderRadius: 10, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#dc2626' },
-  errorText:   { color: '#f87171', fontSize: 13 },
+  errorBanner: { backgroundColor: '#fef2f2', borderRadius: 10, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#fca5a5' },
+  errorText:   { color: '#dc2626', fontSize: 13 },
 });

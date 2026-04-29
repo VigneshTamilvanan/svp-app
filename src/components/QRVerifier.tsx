@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, TextInput,
-  ActivityIndicator, ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { verify, clearPublicKeyCache } from '../lib/crypto';
@@ -9,6 +9,14 @@ import { parseQRString } from '../lib/parser';
 import PayloadBreakdown from './PayloadBreakdown';
 
 type ParsedResult = ReturnType<typeof parseQRString>;
+
+function extractSummary(parsed: ParsedResult) {
+  const balField  = parsed.dataset.dynamicData.fields.find(f => f.name === 'Op-specific Dynamic Data');
+  const mobField  = parsed.dataset.commonData.fields.find(f => f.name === 'Mobile');
+  const balance   = balField ? `₹${parseInt(balField.hex.slice(0, 8), 16) / 100}` : '—';
+  const mobile    = mobField?.hex ?? '—';
+  return { balance, mobile };
+}
 
 export default function QRVerifier() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -52,6 +60,8 @@ export default function QRVerifier() {
     setParsed(null);
     setManualInput('');
   }
+
+  const summary = parsed && verifyOk ? extractSummary(parsed) : null;
 
   return (
     <View>
@@ -116,7 +126,7 @@ export default function QRVerifier() {
               multiline
               numberOfLines={5}
               placeholder="{03|04|…}|{…}|{(…|[…])}|{SIG:…}"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#94a3b8"
               value={manualInput}
               onChangeText={t => { setManualInput(t); reset(); setManualInput(t); }}
               autoCapitalize="none"
@@ -137,7 +147,9 @@ export default function QRVerifier() {
 
         {verifyOk !== null && (
           <View style={[styles.result, verifyOk ? styles.resultOk : styles.resultFail]}>
-            <Text style={styles.resultIcon}>{verifyOk ? '✓' : '✕'}</Text>
+            <Text style={[styles.resultIcon, verifyOk ? styles.okIcon : styles.failIcon]}>
+              {verifyOk ? '✓' : '✕'}
+            </Text>
             <View style={{ flex: 1 }}>
               <Text style={[styles.resultTitle, verifyOk ? styles.okText : styles.failText]}>
                 {verifyOk ? 'Signature Valid' : 'Signature Invalid'}
@@ -151,6 +163,19 @@ export default function QRVerifier() {
             </View>
           </View>
         )}
+
+        {summary && (
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>SVP Balance</Text>
+              <Text style={styles.summaryValue}>{summary.balance}</Text>
+            </View>
+            <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
+              <Text style={styles.summaryLabel}>Mobile</Text>
+              <Text style={styles.summaryValue}>{summary.mobile}</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {parsed && <PayloadBreakdown result={parsed} defaultOpen={false} />}
@@ -159,33 +184,39 @@ export default function QRVerifier() {
 }
 
 const styles = StyleSheet.create({
-  card:         { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, marginBottom: 16 },
-  cardTitle:    { fontSize: 16, fontWeight: '700', color: '#e2e8f0', marginBottom: 14, letterSpacing: 0.3 },
-  modeRow:      { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  modeBtn:      { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#334155', alignItems: 'center' },
-  modeBtnActive:{ borderColor: '#6366f1', backgroundColor: '#1e1b4b' },
-  modeTxt:      { fontSize: 13, color: '#64748b', fontWeight: '600' },
-  modeTxtActive:{ color: '#818cf8' },
-  permBox:      { alignItems: 'center', paddingVertical: 24, gap: 12 },
-  permText:     { color: '#94a3b8', fontSize: 13, textAlign: 'center' },
-  permBtn:      { backgroundColor: '#6366f1', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
-  permBtnText:  { color: '#fff', fontWeight: '700', fontSize: 14 },
-  cameraWrap:   { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
-  camera:       { width: '100%', height: 260 },
-  scanDone:     { height: 100, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a', borderRadius: 12 },
-  scanDoneText: { color: '#94a3b8', fontSize: 13 },
-  resetBtn:     { alignSelf: 'center', marginTop: 4, paddingVertical: 8, paddingHorizontal: 20 },
-  resetTxt:     { color: '#6366f1', fontWeight: '700', fontSize: 13 },
-  textarea:     { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, padding: 12, color: '#e2e8f0', fontFamily: 'monospace', fontSize: 11, minHeight: 100, marginBottom: 10, textAlignVertical: 'top' },
-  verifyBtn:    { backgroundColor: '#6366f1', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  btnDisabled:  { opacity: 0.4 },
-  verifyBtnTxt: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  result:       { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 10, padding: 14, marginTop: 14, borderWidth: 2 },
-  resultOk:     { backgroundColor: '#052e16', borderColor: '#16a34a' },
-  resultFail:   { backgroundColor: '#2d0a0a', borderColor: '#dc2626' },
-  resultIcon:   { fontSize: 22, fontWeight: '900', marginTop: 1 },
-  resultTitle:  { fontSize: 14, fontWeight: '800', marginBottom: 3 },
-  okText:       { color: '#4ade80' },
-  failText:     { color: '#f87171' },
-  resultSub:    { fontSize: 12, color: '#94a3b8', lineHeight: 18 },
+  card:          { backgroundColor: '#ffffff', borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#e2e8f0' },
+  cardTitle:     { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 14, letterSpacing: 0.3 },
+  modeRow:       { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  modeBtn:       { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' },
+  modeBtnActive: { borderColor: '#6366f1', backgroundColor: '#eef2ff' },
+  modeTxt:       { fontSize: 13, color: '#94a3b8', fontWeight: '600' },
+  modeTxtActive: { color: '#6366f1' },
+  permBox:       { alignItems: 'center', paddingVertical: 24, gap: 12 },
+  permText:      { color: '#64748b', fontSize: 13, textAlign: 'center' },
+  permBtn:       { backgroundColor: '#6366f1', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
+  permBtnText:   { color: '#fff', fontWeight: '700', fontSize: 14 },
+  cameraWrap:    { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
+  camera:        { width: '100%', height: 260 },
+  scanDone:      { height: 100, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', borderRadius: 12 },
+  scanDoneText:  { color: '#64748b', fontSize: 13 },
+  resetBtn:      { alignSelf: 'center', marginTop: 4, paddingVertical: 8, paddingHorizontal: 20 },
+  resetTxt:      { color: '#6366f1', fontWeight: '700', fontSize: 13 },
+  textarea:      { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, padding: 12, color: '#0f172a', fontFamily: 'monospace', fontSize: 11, minHeight: 100, marginBottom: 10, textAlignVertical: 'top' },
+  verifyBtn:     { backgroundColor: '#6366f1', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+  btnDisabled:   { opacity: 0.4 },
+  verifyBtnTxt:  { color: '#fff', fontWeight: '700', fontSize: 14 },
+  result:        { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 10, padding: 14, marginTop: 14, borderWidth: 1.5 },
+  resultOk:      { backgroundColor: '#f0fdf4', borderColor: '#16a34a' },
+  resultFail:    { backgroundColor: '#fef2f2', borderColor: '#dc2626' },
+  resultIcon:    { fontSize: 26, fontWeight: '900', marginTop: 1 },
+  okIcon:        { color: '#16a34a' },
+  failIcon:      { color: '#dc2626' },
+  resultTitle:   { fontSize: 14, fontWeight: '800', marginBottom: 3 },
+  okText:        { color: '#15803d' },
+  failText:      { color: '#dc2626' },
+  resultSub:     { fontSize: 12, color: '#64748b', lineHeight: 18 },
+  summaryCard:   { backgroundColor: '#f8fafc', borderRadius: 10, padding: 14, marginTop: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+  summaryRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
+  summaryLabel:  { fontSize: 13, color: '#64748b', fontWeight: '500' },
+  summaryValue:  { fontSize: 15, color: '#0f172a', fontWeight: '700', fontFamily: 'monospace' },
 });

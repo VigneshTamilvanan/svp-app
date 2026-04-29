@@ -13,7 +13,7 @@ export default function VerifyScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: '#0f172a' },
+  safe:    { flex: 1, backgroundColor: '#f8fafc' },
   scroll:  { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
 });

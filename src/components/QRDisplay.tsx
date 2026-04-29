@@ -43,13 +43,13 @@ function CountdownRing({ countdown, refreshSecs }: { countdown: number; refreshS
 }
 
 const ring = StyleSheet.create({
-  row:       { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
-  track:     { width: 44, height: 44, borderRadius: 22, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#6366f1' },
-  number:    { fontSize: 14, fontWeight: '800', color: '#6366f1', fontFamily: 'monospace' },
-  urgent:    { color: '#ef4444' },
+  row:         { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
+  track:       { width: 44, height: 44, borderRadius: 22, backgroundColor: '#f0f0ff', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#6366f1' },
+  number:      { fontSize: 14, fontWeight: '800', color: '#6366f1', fontFamily: 'monospace' },
+  urgent:      { color: '#ef4444' },
   urgentLabel: { color: '#ef4444' },
-  label:     { fontSize: 12, fontWeight: '700', color: '#94a3b8' },
-  sub:       { fontSize: 11, color: '#475569', marginTop: 2 },
+  label:       { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  sub:         { fontSize: 11, color: '#94a3b8', marginTop: 2 },
 });
 
 export default function QRDisplay({ result, countdown, refreshSecs, sessionExpired, onResume, loading }: Props) {
@@ -133,21 +133,21 @@ export default function QRDisplay({ result, countdown, refreshSecs, sessionExpir
 }
 
 const styles = StyleSheet.create({
-  card:       { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, marginBottom: 16 },
-  cardTitle:  { fontSize: 16, fontWeight: '700', color: '#e2e8f0', marginBottom: 12, letterSpacing: 0.3 },
-  badge:      { alignSelf: 'flex-start', backgroundColor: '#312e81', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 16 },
-  badgeText:  { fontSize: 10, fontWeight: '800', color: '#a5b4fc', letterSpacing: 1 },
-  qrWrap:     { alignItems: 'center', marginBottom: 12, position: 'relative' },
-  expiredOverlay: { position: 'absolute', inset: 0, top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  expiredTitle: { fontSize: 13, fontWeight: '800', color: '#ef4444' },
-  expiredSub:   { fontSize: 12, color: '#94a3b8' },
-  resumeBtn:  { backgroundColor: '#6366f1', borderRadius: 8, paddingHorizontal: 24, paddingVertical: 8, marginTop: 4 },
-  resumeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  serial:     { fontSize: 11, fontFamily: 'monospace', color: '#64748b', textAlign: 'center', marginBottom: 4 },
-  placeholder: { alignItems: 'center', paddingVertical: 40 },
-  placeholderText: { color: '#475569', textAlign: 'center', fontSize: 14, lineHeight: 22 },
-  infoCard:   { backgroundColor: '#0f172a', borderRadius: 10, padding: 12, marginTop: 12 },
-  infoRow:    { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  infoLabel:  { fontSize: 12, color: '#64748b', flex: 1 },
-  infoValue:  { fontSize: 12, color: '#a5b4fc', fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+  card:            { backgroundColor: '#ffffff', borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#e2e8f0' },
+  cardTitle:       { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 12, letterSpacing: 0.3 },
+  badge:           { alignSelf: 'flex-start', backgroundColor: '#eef2ff', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 16 },
+  badgeText:       { fontSize: 10, fontWeight: '800', color: '#6366f1', letterSpacing: 1 },
+  qrWrap:          { alignItems: 'center', marginBottom: 12, position: 'relative' },
+  expiredOverlay:  { position: 'absolute', inset: 0, top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  expiredTitle:    { fontSize: 13, fontWeight: '800', color: '#ef4444' },
+  expiredSub:      { fontSize: 12, color: '#94a3b8' },
+  resumeBtn:       { backgroundColor: '#6366f1', borderRadius: 8, paddingHorizontal: 24, paddingVertical: 8, marginTop: 4 },
+  resumeText:      { color: '#fff', fontWeight: '700', fontSize: 13 },
+  serial:          { fontSize: 11, fontFamily: 'monospace', color: '#94a3b8', textAlign: 'center', marginBottom: 4 },
+  placeholder:     { alignItems: 'center', paddingVertical: 40 },
+  placeholderText: { color: '#94a3b8', textAlign: 'center', fontSize: 14, lineHeight: 22 },
+  infoCard:        { backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, marginTop: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+  infoRow:         { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
+  infoLabel:       { fontSize: 12, color: '#64748b', flex: 1 },
+  infoValue:       { fontSize: 12, color: '#6366f1', fontWeight: '600', flexShrink: 1, textAlign: 'right' },
 });
