@@ -6,7 +6,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { parseQRString } from '../lib/parser';
 import { verify } from '../lib/crypto';
-import { processGate, checkQRFreshness, extractTxnId, getSavedStation, saveStation, GateStation, EventType } from '../lib/gate';
+import { processGate, checkQRFreshness, extractTxnId, extractMobileNumber, getSavedStation, saveStation, GateStation, EventType } from '../lib/gate';
 import { STATIONS } from '../constants/stations';
 
 type ResultState = { type: EventType; station: string } | { error: string } | null;
@@ -26,11 +26,18 @@ export default function GateScanner() {
     setResult(null);
     try {
       const parsed = parseQRString(data);
+      console.log('[Gate] QR parsed');
       const ok     = await verify(parsed.plaintext, parsed.signature);
+      console.log('[Gate] Signature valid:', ok);
       if (!ok) throw new Error('Invalid QR signature');
       checkQRFreshness(parsed);
-      const txnId = extractTxnId(parsed);
-      const { type } = await processGate(txnId, parsed.dataset.commonData.fields.find(f => f.name === 'Ticket Serial No')?.hex ?? '', station);
+      const txnId      = extractTxnId(parsed);
+      const mobileRaw  = parsed.dataset.commonData.fields.find(f => f.name === 'Mobile')?.hex ?? '';
+      const mobile     = extractMobileNumber(mobileRaw);
+      console.log('[Gate] txnId:', txnId, 'mobile:', mobile, 'station:', station.stationCode);
+      const rawSerial  = parsed.dataset.commonData.fields.find(f => f.name === 'Ticket Serial No')?.hex ?? '';
+      const { type, allowed, reason } = await processGate(txnId, rawSerial, mobile, station);
+      console.log('[Gate] result:', { type, allowed, reason });
       setResult({ type, station: station.name });
     } catch (e: unknown) {
       setResult({ error: (e as Error).message });

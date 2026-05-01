@@ -32,7 +32,7 @@ export interface GateEvent {
 const QR_MAX_AGE_SECS = 30;
 
 const FARE_API_URL = 'https://api.sandbox.moving.tech/dev/app/v2/svp/gate';
-const MERCHANT_ID  = 'da4e23a5-3ce6-4c37-8b9b-41377c3c1a51';
+const MERCHANT_ID  = '4b17bd06-ae7e-48e9-85bf-282fb310209c';
 
 export function checkQRFreshness(parsed: { dataset: { dynamicData: { fields: { name: string; hex: string }[] } } }): void {
   const updatedHex = parsed.dataset.dynamicData.fields.find(f => f.name === 'QR Updated Time')?.hex;
@@ -42,8 +42,8 @@ export function checkQRFreshness(parsed: { dataset: { dynamicData: { fields: { n
   if (ageSecs < 0) throw new Error('QR timestamp is in the future');
 }
 
-export function extractMobileNumber(mobileHex: string): string {
-  return parseInt(mobileHex, 16).toString();
+export function extractMobileNumber(mobileRaw: string): string {
+  return mobileRaw.replace(/\D/g, '');
 }
 
 async function pushToFareAPI(
@@ -52,13 +52,17 @@ async function pushToFareAPI(
   scanType:     'ENTRY' | 'EXIT',
   timestamp:    string,
 ): Promise<{ allowed: boolean; reason: string | null }> {
+  const payload = { mobileNumber, merchantId: MERCHANT_ID, stationCode, timestamp, scanType };
+  console.log('[FareAPI] request:', JSON.stringify(payload));
   const res = await fetch(FARE_API_URL, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ mobileNumber, merchantId: MERCHANT_ID, stationCode, timestamp, scanType }),
+    body:    JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`Fare API error ${res.status}`);
-  return res.json();
+  const body = await res.text();
+  console.log('[FareAPI] status:', res.status, 'body:', body);
+  if (!res.ok) throw new Error(`Fare API error ${res.status}: ${body}`);
+  return JSON.parse(body);
 }
 
 export async function processGate(

@@ -116,11 +116,11 @@ export async function validatePayload(result: ParsedQR): Promise<CheckResult[]> 
   );
 
   const opDynHex = dynamicData.fields.find((f: { name: string }) => f.name === 'Op-specific Dynamic Data')?.hex ?? '';
-  const balancePaisa = parseInt(opDynHex.slice(0, 8), 16);
+  const balanceRs = parseInt(opDynHex.slice(0, 8), 16);
   checks.push(
-    balancePaisa >= SVP_DEFAULTS.MIN_BALANCE
-      ? pass('D03', 'TAG 84 + Business Rule', `SVP balance ≥ ₹50 (₹${balancePaisa / 100})`, `Balance: ${balancePaisa} paisa`)
-      : fail('D03', 'TAG 84 + Business Rule', 'SVP balance below ₹50 minimum', `Balance: ${balancePaisa} paisa`)
+    balanceRs >= SVP_DEFAULTS.MIN_BALANCE
+      ? pass('D03', 'TAG 84 + Business Rule', `SVP balance ≥ ₹50 (₹${balanceRs})`, `Balance: ₹${balanceRs}`)
+      : fail('D03', 'TAG 84 + Business Rule', 'SVP balance below ₹50 minimum', `Balance: ₹${balanceRs}`)
   );
 
   const opIdHex = ticketBlock.opId;

@@ -86,6 +86,6 @@ export const QR_SOURCE = {
 export const SVP_DEFAULTS = {
   VALIDITY_MINS: 480,
   DURATION_MINS: 180,
-  MIN_BALANCE:   5000,
+  MIN_BALANCE:   50,
   MAX_BALANCE:   1000000,
 };
